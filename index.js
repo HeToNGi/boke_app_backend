@@ -2,7 +2,7 @@ const express = require('express')
 const app = express();
 const port = 8080;
 const fs = require('fs');
-// const db = require('./db/index.js');
+const db = require('./db/index.js');
 var WebSocket = require('ws');
 const cookieParser = require("cookie-parser");  
 const bodyParser = require('body-parser');
@@ -28,38 +28,19 @@ const key2name = {
 }
 // 查询一遍用户表
 const queryUser = (req, callback) => {
-  db.query(`select id,username,user_password,user_type from medicine_users where username = '${req.body.user_name}'`, [], callback);
+  db.query(`select id,username,password from users where username = '${req.body.user_name}'`, [], callback);
 }
-// 第一次测试使用的get请求
-app.get('/first', (req, res) => {
-  res.send({code: 0, message: '请求成功', name: '李白', age: 17});
-});
+
 // 请求前端目录
 app.get('/frontend_technology_catalog', (req, res) => {
   const data = [];
-  for (key in key2name) {
-    data.push({
-      key,
-      label: key2name[key],
-    }) 
-  }
-  res.send({
-    code: 0,
-    message: '请求成功',
-    data: data,
-  });
-})
-// 根据key请求前端技术内容
-app.get('/frontend_content/:contentId', (req, res) => {
-  const { contentId } = req.params;
-  fs.readFile(`./public/frontend/${contentId}.md`, 'utf8', (err, data) => {
-    if (err) {
-      console.error('读取文件错误', err);
-      res.status(500).send('读取文件错误');
-      return;
-    }
-
-    // 将文件内容作为响应发送给客户端
+  db.query(`select ${'`key`'},title from article where type = 'front'`, [], (result) => {
+    result.forEach(element => {
+      data.push({
+        key: element.key,
+        label: element.title,
+      }) 
+    });
     res.send({
       code: 0,
       message: '请求成功',
@@ -67,6 +48,31 @@ app.get('/frontend_content/:contentId', (req, res) => {
     });
   });
 })
+// 根据key请求前端技术内容
+app.get('/frontend_content/:contentId', (req, res) => {
+  const { contentId } = req.params;
+    db.query(`select content,title from article where ${'`key`'} = ${contentId}`, [], (result) => {
+      res.send({
+        code: 0,
+        message: '请求成功',
+        data: {title: result[0].title, content: result[0].content},
+      });
+    });
+});
+
+app.post('/save_content', (req, res) => {
+  if (id) {
+    db.query(`update article set content='${content}', title='${title}', type='${type}' where ${'`key`'} = ${id}`, [], function(results, fields) {
+      res.send({code: 0, message: '保存成功', data: {id}});
+      });
+  } else {
+    let key = (new Date()).getTime();
+    db.query(`insert into article (type, title, content, ${'`key`'})
+      values ('${type}','${title}','${content}','${key}')`, [], function (results, fields) {
+        res.send({code: 0, message: '保存成功', data: {id: key}});
+      })
+  }
+});
 // 登录请求
 app.post('/login', (req, res) => {
   queryUser(req, function (results, fields) {
@@ -89,11 +95,11 @@ app.post('/register', (req, res) => {
       res.status(401).send({code: 1, message: '该用户已存在'})
       return;
     };    
-    db.query(`insert into medicine_users (username, user_type, user_password, members_point)
-    values ('${req.body.user_name}', '0', '${req.body.pass_word}', 0)`, [], function (results, fields) {
-      res.send({code: 0, message: '注册成功', data: {user_name: req.body.user_name, pass_word: req.body.pass_word}});
-    })
-  })
+    db.query(`insert into users (username, password)
+      values ('李白', '272320')`, [], function (results, fields) {
+        console.log(results, fields)
+      })
+  });
 });
 // 注销账号
 app.post('/delete_user', (req, res) => {
@@ -106,14 +112,6 @@ app.post('/edit_user', (req, res) => {
   db.query(`update medicine_users set user_password='${req.body.pass_word}' where id = ${req.body.user_id}`, [], function(results, fields) {
     res.send({code: 0, message: '修改成功', data: results || {}});
   });
-});
-let count = 1;
-// 修改密码
-app.post('/scdd', (req, res) => {
-  res.status(200).send({code: 0, message: '成功'});
-  // console.log(req.body.data);
-  console.log(JSON.parse(Buffer.from(req.body.data, 'base64').toString()));
-  console.log(count++);
 });
 // app.use(express.static('public'))
 // var wss = new WebSocket.Server({ port: 8081 });
