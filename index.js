@@ -61,6 +61,7 @@ app.get('/frontend_content/:contentId', (req, res) => {
 });
 
 app.post('/save_content', (req, res) => {
+  const { id } = req.body;
   if (id) {
     db.query(`update article set content='${content}', title='${title}', type='${type}' where ${'`key`'} = ${id}`, [], function(results, fields) {
       res.send({code: 0, message: '保存成功', data: {id}});
