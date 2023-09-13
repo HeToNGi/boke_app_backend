@@ -52,11 +52,20 @@ app.get('/frontend_technology_catalog', (req, res) => {
 app.get('/frontend_content/:contentId', (req, res) => {
   const { contentId } = req.params;
     db.query(`select content,title from article where ${'`key`'} = ${contentId}`, [], (result) => {
-      res.send({
-        code: 0,
-        message: '请求成功',
-        data: {title: result[0].title, content: result[0].content},
-      });
+      console.log(result, 'resultresult')
+      if (!result.length) {
+        res.send({
+          code: 0,
+          message: '请求成功',
+          data: {title: '', content: ''},
+        });
+      } else {
+        res.send({
+          code: 0,
+          message: '请求成功',
+          data: {title: result[0].title, content: result[0].content},
+        });
+      }
     });
 });
 
@@ -72,6 +81,15 @@ app.post('/save_content', (req, res) => {
       values ('${type}','${title}','${content}','${key}')`, [], function (results, fields) {
         res.send({code: 0, message: '保存成功', data: {id: key}});
       })
+  }
+});
+
+app.post('/delete_content', (req, res) => {
+  const { id } = req.body;
+  if (id) {
+    db.query(`delete from article where ${'`key`'} = ${id}`, [], function(results, fields) {
+        res.send({code: 0, message: '删除成功', data: {id}});
+      });
   }
 });
 // 登录请求
