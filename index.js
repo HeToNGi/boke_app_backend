@@ -9,7 +9,6 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require('body-parser');
 // const { exec } = require('child_process');
 
-let news = require("./get_news/data.json")
 
 // 添加 body-parser 中间件
 app.use(bodyParser.json());
@@ -137,13 +136,6 @@ app.post('/edit_user', (req, res) => {
   });
 });
 
-app.get('/news', (req, res) => {
-  res.send({
-    code: 0,
-    message: '请求成功',
-    data: news,
-  });
-})
 // app.use(express.static('public'))
 // var wss = new WebSocket.Server({ port: 8081 });
 // wss.on('connection', function connection(ws) {
