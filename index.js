@@ -4,9 +4,27 @@ const port = 8080;
 const fs = require('fs');
 const db = require('./db/index.js');
 var WebSocket = require('ws');
+const schedule = require('node-schedule');
 const cookieParser = require("cookie-parser");  
 const bodyParser = require('body-parser');
+const { exec } = require('child_process');
 
+let news = require("./get_news/data.json")
+// 创建定时任务
+const dailyTask = schedule.scheduleJob('0 17 * * *', function() {
+  // 每天早晨9点执行的任务
+  console.log('执行每天早晨9点的任务');
+  // 使用exec函数运行Python脚本
+  exec('python ./get_news/index.py', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`执行Python脚本时出错: ${error}`);
+      return res.status(500).send('执行Python脚本时出错');
+    }
+    news = require("./get_news/data.json");
+    console.log('======news========');
+    console.log('news')
+  });
+});
 
 // 添加 body-parser 中间件
 app.use(bodyParser.json());
@@ -14,6 +32,7 @@ app.use(express.json()) // for parsing application/json
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 app.use(express.static('public'))
+
 app.all('*',function(req,res,next){
   res.header('Access-Control-Allow-Origin', '*');//的允许所有域名的端口请求（跨域解决）
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -21,11 +40,11 @@ app.all('*',function(req,res,next){
   res.header('Content-Type', 'application/json;charset=utf-8');
   next();
 })
-const key2name = {
-  1694139351660: '变量提升：JavaScript是按顺序执行的么？',
-  1694139597109: '参透了浏览器的工作原理，可以解决80%的难题',
-  1694139632055: 'Chrome架构：仅仅打开了1个页面，为什么有4个进程',
-}
+// const key2name = {
+//   1694139351660: '变量提升：JavaScript是按顺序执行的么？',
+//   1694139597109: '参透了浏览器的工作原理，可以解决80%的难题',
+//   1694139632055: 'Chrome架构：仅仅打开了1个页面，为什么有4个进程',
+// }
 // 查询一遍用户表
 const queryUser = (req, callback) => {
   db.query(`select id,username,password from users where username = '${req.body.user_name}'`, [], callback);
@@ -132,6 +151,14 @@ app.post('/edit_user', (req, res) => {
     res.send({code: 0, message: '修改成功', data: results || {}});
   });
 });
+
+app.get('/news', (req, res) => {
+  res.send({
+    code: 0,
+    message: '请求成功',
+    data: news,
+  });
+})
 // app.use(express.static('public'))
 // var wss = new WebSocket.Server({ port: 8081 });
 // wss.on('connection', function connection(ws) {
