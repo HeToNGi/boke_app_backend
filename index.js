@@ -4,37 +4,12 @@ const port = 8080;
 const fs = require('fs');
 const db = require('./db/index.js');
 var WebSocket = require('ws');
-const schedule = require('node-schedule');
+// const schedule = require('node-schedule');
 const cookieParser = require("cookie-parser");  
 const bodyParser = require('body-parser');
-const { exec } = require('child_process');
+// const { exec } = require('child_process');
 
 let news = require("./get_news/data.json")
-
-exec('python3 ./get_news/index.py', (error, stdout, stderr) => {
-  if (error) {
-    console.error(`执行Python脚本时出错: ${error}`);
-    return res.status(500).send('执行Python脚本时出错');
-  }
-  news = require("./get_news/data.json");
-  console.log('======news========');
-  console.log('news')
-});
-// 创建定时任务
-const dailyTask = schedule.scheduleJob('0 17 * * *', function() {
-  // 每天早晨9点执行的任务
-  console.log('执行每天早晨9点的任务');
-  // 使用exec函数运行Python脚本
-  exec('python3 ./get_news/index.py', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`执行Python脚本时出错: ${error}`);
-      return res.status(500).send('执行Python脚本时出错');
-    }
-    news = require("./get_news/data.json");
-    console.log('======news========');
-    console.log('news')
-  });
-});
 
 // 添加 body-parser 中间件
 app.use(bodyParser.json());
