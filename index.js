@@ -123,6 +123,7 @@ app.post('/register', (req, res) => {
       })
   });
 });
+
 // 注销账号
 app.post('/delete_user', (req, res) => {
   db.query(`delete from medicine_users where id = ${req.body.user_id}`, [], function(results, fields) {
@@ -136,6 +137,10 @@ app.post('/edit_user', (req, res) => {
   });
 });
 
+app.get('/news', (req, res) => {
+  const data = require('./get_news/data.json');
+  res.send({code: 0, message: '请求成功', data: data || []});
+});
 // app.use(express.static('public'))
 // var wss = new WebSocket.Server({ port: 8081 });
 // wss.on('connection', function connection(ws) {
