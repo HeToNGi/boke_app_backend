@@ -138,8 +138,13 @@ app.post('/edit_user', (req, res) => {
 });
 
 app.get('/news', (req, res) => {
-  const data = require('./get_news/data.json');
-  res.send({code: 0, message: '请求成功', data: data || []});
+  fs.readFile('./get_news/data.json', 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    res.send({code: 0, message: '请求成功', data: data || []});
+  });
 });
 // app.use(express.static('public'))
 // var wss = new WebSocket.Server({ port: 8081 });
