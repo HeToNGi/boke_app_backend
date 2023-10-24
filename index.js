@@ -143,7 +143,16 @@ app.get('/news', (req, res) => {
       console.error(err);
       return;
     }
-    res.send({code: 0, message: '请求成功', data: data || []});
+    let list = JSON.parse(data);
+    if (list && list.length) {
+      list = list.map(l => {
+        if (!l.img.includes('https')) {
+          l.img = 'https' + l.img;
+        }
+        return l;
+      })
+    }
+    res.send({code: 0, message: '请求成功', data: list || []});
   });
 });
 // app.use(express.static('public'))
