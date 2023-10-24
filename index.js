@@ -147,7 +147,7 @@ app.get('/news', (req, res) => {
     if (list && list.length) {
       list = list.map(l => {
         if (!l.img.includes('http')) {
-          l.img = 'https' + l.img;
+          l.img = 'https:' + l.img;
         }
         return l;
       })
