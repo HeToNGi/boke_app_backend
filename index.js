@@ -146,7 +146,7 @@ app.get('/news', (req, res) => {
     let list = JSON.parse(data);
     if (list && list.length) {
       list = list.map(l => {
-        if (!l.img.includes('https')) {
+        if (!l.img.includes('http')) {
           l.img = 'https' + l.img;
         }
         return l;
