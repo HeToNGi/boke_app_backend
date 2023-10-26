@@ -7,8 +7,9 @@ var WebSocket = require('ws');
 // const schedule = require('node-schedule');
 const cookieParser = require("cookie-parser");  
 const bodyParser = require('body-parser');
-// const { exec } = require('child_process');
+const apiClient = require('./util/axios.js'); // 导入自定义的 Axios 实例
 
+// const { exec } = require('child_process');
 
 // 添加 body-parser 中间件
 app.use(bodyParser.json());
@@ -24,11 +25,7 @@ app.all('*',function(req,res,next){
   res.header('Content-Type', 'application/json;charset=utf-8');
   next();
 })
-// const key2name = {
-//   1694139351660: '变量提升：JavaScript是按顺序执行的么？',
-//   1694139597109: '参透了浏览器的工作原理，可以解决80%的难题',
-//   1694139632055: 'Chrome架构：仅仅打开了1个页面，为什么有4个进程',
-// }
+
 // 查询一遍用户表
 const queryUser = (req, callback) => {
   db.query(`select id,username,password from users where username = '${req.body.user_name}'`, [], callback);
@@ -154,7 +151,34 @@ app.get('/news', (req, res) => {
     }
     res.send({code: 0, message: '请求成功', data: list || []});
   });
+  res.send({code: 0, message: '请求成功', data: []});
 });
+
+
+app.post('/wenxinworkshop', (req, res) => {
+  // console.log(req.body);
+  const { messages } = req.body;
+  // setTimeout(() => {
+  //   res.send({code: 0, message: '请求成功', data: {result: "JavaScript的闭包是一种特殊的特性，它允许函数访问并操作函数外部的变量。闭包的产生需要满足三个条件：函数嵌套，内部函数引用外部函数的变量，并且内部函数在外部函数之外被调用。闭包有以下的特点和用途"}});
+  // }, 2000)
+  apiClient.post('/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token=24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833', {
+    "messages": messages
+  }).then(response => {
+    res.send({code: 0, message: '请求成功', data: {result: response.data.result}});
+  }).catch((err) => {
+    res.send({code: -1, message: '请求失败', data: err});
+  })
+  // https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token=24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833
+});
+
+// 24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833
+
+
+
+
+// apiClient.post('/oauth/2.0/token?grant_type=client_credentials&client_id=RAzDbN1aPg2vzpTEA1qZTyPB&client_secret=5vbU1fqGtXqiQbjNe81xavuQ8Tedh6fA').then((res) => {
+//   console.log(res);
+// })
 // app.use(express.static('public'))
 // var wss = new WebSocket.Server({ port: 8081 });
 // wss.on('connection', function connection(ws) {
