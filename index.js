@@ -163,9 +163,9 @@ app.post('/wenxinworkshop', (req, res) => {
   apiClient.post('/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token=24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833', {
     "messages": messages
   }).then(response => {
-    res.send({code: 0, message: '请求成功', data: {result: response.data.result}});
+    res.send({code: 0, message: '请求成功', data: {result: response.data.result || '抱歉，可以把问题描述的在完整一些么'}});
   }).catch((err) => {
-    res.send({code: -1, message: '请求失败', data: err});
+    res.send({code: -1, message: '请求失败', data: {result: '服务超时', err,}});
   })
   // https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token=24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833
 });
