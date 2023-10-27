@@ -135,31 +135,49 @@ app.post('/edit_user', (req, res) => {
 });
 
 app.get('/news', (req, res) => {
-  fs.readFile('./get_news/data.json', 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return;
-    }
-    let list = JSON.parse(data);
-    if (list && list.length) {
-      list = list.map(l => {
-        if (!l.img.includes('http')) {
-          l.img = 'https:' + l.img;
-        }
-        return l;
-      })
-    }
-    res.send({code: 0, message: '请求成功', data: list || []});
+  db.query(`select * from news`, [], (result) => {
+    const data = result.map(r => {
+      const {title, href, img} = r
+      return {
+        title,
+        href,
+        img
+      }
+    })
+    res.send({
+      code: 0,
+      message: '请求成功',
+      data,
+    });
   });
 });
 
+app.get('/weather', (req, res) => {
+  db.query(`select * from weather_data`, [], (result) => {
+    res.send({
+      code: 0,
+      message: '请求成功',
+      data: result[0],
+    });
+  });
+});
+
+app.get('/stock_price', (req, res) => {
+  db.query(`select * from stock_info`, [], (result) => {
+    const data = result.map(r => {
+      delete r.id;
+      return r;
+    })
+    res.send({
+      code: 0,
+      message: '请求成功',
+      data,
+    });
+  });
+});
 
 app.post('/wenxinworkshop', (req, res) => {
-  // console.log(req.body);
   const { messages } = req.body;
-  // setTimeout(() => {
-  //   res.send({code: 0, message: '请求成功', data: {result: "JavaScript的闭包是一种特殊的特性，它允许函数访问并操作函数外部的变量。闭包的产生需要满足三个条件：函数嵌套，内部函数引用外部函数的变量，并且内部函数在外部函数之外被调用。闭包有以下的特点和用途"}});
-  // }, 2000)
   apiClient.post('/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token=24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833', {
     "messages": messages
   }).then(response => {
@@ -167,8 +185,9 @@ app.post('/wenxinworkshop', (req, res) => {
   }).catch((err) => {
     res.send({code: -1, message: '请求失败', data: {result: '服务超时', err,}});
   })
-  // https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token=24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833
 });
+
+
 
 // 24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833
 
