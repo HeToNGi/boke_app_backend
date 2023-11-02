@@ -187,6 +187,46 @@ app.post('/wenxinworkshop', (req, res) => {
   })
 });
 
+const titleRegex = /<title>(.*?)<\/title>/;
+const iconRegex = /<link[^>]*(rel=["']icon["']|rel=["']shortcut icon["'])[^>]*href=["']([^"']+)["']/g;
+app.get('/get_title_icon', (req, res) => {
+  const { src } = req.query;
+  apiClient.get(src).then(response => {
+    const html = response.data;
+    const match_title = html.match(titleRegex);
+    const match_icon = html.match(iconRegex);
+    const data = {
+      title: match_title[1],
+    }
+    if (match_icon) {
+        // 匹配到的图标链接存储在matches数组中
+        for (var i = 0; i < match_icon.length; i++) {
+            // 提取href属性的值
+            let iconLink = match_icon[i].match(/href=["']([^"']+)["']/)[1];
+            // if () {}
+            // 检查图标链接是否包含 http
+            if (!iconLink.match(/^http/)) {
+                var srcURL = new URL(src);
+                // 如果不包含协议和域名，添加 src 的协议和域名
+                if (iconLink.charAt(0) === '/') {
+                    // 如果图标链接以斜杠开头，直接拼接协议和域名
+                    iconLink = srcURL.protocol + "//" + srcURL.host + iconLink;
+                } else {
+                    // 否则，将协议和域名添加到图标链接的前面
+                    iconLink = src + "/" + iconLink;
+                    iconLink = srcURL.protocol + "//" + srcURL.host +'/'+ iconLink;
+                }
+            }
+            data.icon = iconLink
+        }
+    } else {
+        console.log("未找到图标链接");
+    }
+    res.send({code: 0, message: '请求成功', data});
+  }).catch((err) => {
+    res.send({code: 1, message: '请求失败', data: err});
+  })
+});
 
 
 // 24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833
