@@ -12,7 +12,7 @@ const apiClient = require('./util/axios.js'); // 导入自定义的 Axios 实例
 // const { exec } = require('child_process');
 
 // 添加 body-parser 中间件
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '10mb'}));
 app.use(express.json()) // for parsing application/json
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
@@ -23,6 +23,7 @@ app.all('*',function(req,res,next){
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   res.header('Access-Control-Allow-Methods', '*');
   res.header('Content-Type', 'application/json;charset=utf-8');
+  res.setHeader('Access-Control-Allow-Credentials', 'true'); // 允许发送身份凭证（如 cookies）
   next();
 })
 
@@ -92,6 +93,7 @@ app.post('/delete_content', (req, res) => {
       });
   }
 });
+
 // 登录请求
 app.post('/login', (req, res) => {
   queryUser(req, function (results, fields) {
@@ -107,6 +109,7 @@ app.post('/login', (req, res) => {
     }
   })
 });
+
 // 注册账号
 app.post('/register', (req, res) => {
   queryUser(req, (results, fields) => {
@@ -237,19 +240,128 @@ app.get('/get_title_icon', (req, res) => {
 // apiClient.post('/oauth/2.0/token?grant_type=client_credentials&client_id=RAzDbN1aPg2vzpTEA1qZTyPB&client_secret=5vbU1fqGtXqiQbjNe81xavuQ8Tedh6fA').then((res) => {
 //   console.log(res);
 // })
-// app.use(express.static('public'))
-// var wss = new WebSocket.Server({ port: 8081 });
-// wss.on('connection', function connection(ws) {
-  // console.log('server: receive connection.');
-  
-  // ws.on('message', function incoming(message) {
-  //     console.log('server: received: %s', message);
-  // });
+app.use(express.static('public'))
 
-  // setInterval(() => {
-  //   ws.send('李白')
-  // }, 1000);
-// });
+// 登录window11
+
+// 查询window11用户 win11_user_name win11_avatar_img win11_telephone_number
+const queryWin11User = (req, callback) => {
+  db.query(`select * from win11_users where win11_user_name = '${req.body.user_name}'`, [], callback);
+}
+
+function generatePhoneNumber() {
+  var phoneNumber = "1";
+  for (var i = 0; i < 10; i++) {
+    phoneNumber += Math.floor(Math.random() * 10);
+  }
+  return phoneNumber;
+}
+
+
+// 登录请求 如果存在直接登录，如果不存就直接注册
+app.post('/win11_login', (req, res) => {
+  queryWin11User(req, function (results, fields) {
+    if (!results.length) {
+      var phoneNumber = generatePhoneNumber();
+      db.query(`insert into win11_users (win11_user_name, win11_avatar_img, win11_telephone_number)
+        values ('${req.body.user_name}', '', ${phoneNumber})`, [], function (results, fields) {
+          res.send({code: 0, message: '注册成功', data: {
+            user_name: req.body.user_name,
+            avatar_img: '',
+            telephone_number: phoneNumber,
+          }})
+        })
+      return;
+    } else {
+      res.send({code: 0, message: '登录成功', data: results[0]})
+    }
+  })
+});
+
+app.post('/change_avatar_img', (req, res) => {
+  const { user_name, avatar_img, telephone_number } = req.body
+    // 解码图片数据
+  const base64Data = avatar_img.replace(/^data:image\/\w+;base64,/, '');
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  // 保存为文件
+  const filename = new Date().getTime()+'.jpg'; // 设置文件名
+  fs.writeFileSync(`./public/avatar_img/${filename}`, buffer);
+  db.query(`update win11_users set win11_avatar_img='http://152.136.52.163:8080/avatar_img/${filename}' where  win11_user_name='${user_name}'`, [], function(results, fields) {
+    res.send({code: 0, message: '修改成功', data: {
+      user_name: user_name,
+      avatar_img: `http://152.136.52.163:8080/avatar_img/${filename}`,
+      telephone_number: telephone_number,
+    }})
+  });
+});
+
+app.get('/avatar_of_telephone_number', (req, res) => {
+  const { telephone_number } = req.query;
+  db.query(`select * from win11_users where win11_telephone_number = '${telephone_number}'`, [], (result) => {
+    if (result.length) {
+      res.send({code: 0, message: '请求成功', data: result[0]});
+    } else {
+      res.send({code: 1, message: '暂无数据', data: {}});
+    }
+  })
+});
+app.get('/userinfo_of_teleorname', (req, res) => {
+  const { telephone_number, user_name } = req.query;
+  if (telephone_number) {
+    db.query(`select * from win11_users where win11_telephone_number = '${telephone_number}'`, [], (result) => {
+      if (result.length) {
+        res.send({code: 0, message: '请求成功', data: result[0]});
+      } else {
+        res.send({code: 1, message: '暂无数据', data: {}});
+      }
+    })  
+  }
+  if (user_name) {
+    db.query(`select * from win11_users where win11_user_name = '${user_name}'`, [], (result) => {
+      if (result.length) {
+        res.send({code: 0, message: '请求成功', data: result[0]});
+      } else {
+        res.send({code: 1, message: '暂无数据', data: {}});
+      }
+    })
+  }
+})
+
+
+app.post('/add_contact', (req, res) => {
+  const { user_name, avatar_img, telephone_number, contact_name, remarks } = req.body
+  db.query(`INSERT INTO win11_contacts (remarks, avatar_img, telephone_number, contact_name, user_name)
+    VALUES ('${remarks}', '${avatar_img}', '${telephone_number}', '${contact_name}', '${user_name}')`, [], (result) => {
+    res.send({code: 0, message: '添加成功', data: {}});
+  })
+});
+
+app.get('/contacts', (req, res) => {
+  const { user_name } = req.query;
+  db.query(`select * from win11_contacts where user_name = '${user_name}'`, [], (result) => {
+    if (result.length) {
+      res.send({code: 0, message: '添加成功', data: result});
+    } else {
+      res.send({code: 1, message: '暂无数据', data: []});
+    }
+  })
+});
+
+// 用于视频对话的websocket
+const clients = {}
+var wss = new WebSocket.Server({ port: 8081 });
+wss.on('connection', function connection(ws) {
+  clients[ws._protocol] = ws;
+  clients[ws._protocol].on('message', function incoming(message) {
+    const bufferdata = message.toString('utf-8');
+    const { target, data } = JSON.parse(bufferdata);
+    // console.log(target, data.type)
+    if (clients[target]) {
+      clients[target].send(JSON.stringify(data));
+    }
+  });
+});
 app.listen(port, () => {
   console.log(`正在监听${port}端口`);
 })
