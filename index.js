@@ -341,13 +341,113 @@ app.get('/contacts', (req, res) => {
   const { user_name } = req.query;
   db.query(`select * from win11_contacts where user_name = '${user_name}'`, [], (result) => {
     if (result.length) {
-      res.send({code: 0, message: '添加成功', data: result});
+      res.send({code: 0, message: '获取成功', data: result});
     } else {
       res.send({code: 1, message: '暂无数据', data: []});
     }
   })
 });
 
+app.post('/add_callrecord', (req, res) => {
+  const { caller, receiver, start_time, duration, connected } = req.body
+  db.query(`INSERT INTO call_records (caller, receiver, start_time, duration, connected)
+    VALUES ('${caller}', '${receiver}', '${start_time}', '${duration}', '${connected}')`, [], (result) => {
+    res.send({code: 0, message: '添加成功', data: {}});
+  })
+});
+
+app.get('/call_record', (req, res) => {
+  const { telephone_number } = req.query
+  db.query(`SELECT * FROM call_records WHERE caller = '${telephone_number}'  OR receiver = '${telephone_number}';`, [], (result) => {
+    res.send({code: 0, message: '获取成功', data: result});
+  })
+});
+
+app.get('/store_slider', (req, res) => {
+  const { type } = req.query
+  db.query(`SELECT * FROM store_slider WHERE type = '${type}'`, [], (result) => {
+    res.send({code: 0, message: '获取成功', data: result});
+  })
+})
+
+app.get('/store_apps', (req, res) => {
+  const { type } = req.query;
+  if (type === 'home') {
+    db.query('SELECT * FROM store_apps', [], (result) => {
+      const data = {
+        // essential: [],
+        // productivity: [],
+        // music_streaming: [],
+        // creativity: [],
+      };
+      if (result && result.length) {
+        result.forEach(item => {
+          if (!data[item.type]) data[item.type] = [];
+          if (item.desc && item.type === 'creativity') {
+            data[item.type].push(item);
+            return;
+          }
+          if (data[item.type].length < 9) {
+            data[item.type].push(item);
+          }
+        });
+        res.send({code: 0, message: '获取成功', data: data});
+      } else {
+        res.send({code: 1, message: '获取失败', data: {}});
+      }
+    })
+  }
+})
+app.get('/store_games', (req, res) => {
+  const { type } = req.query;
+  if (type === 'home') {
+    db.query('SELECT * FROM store_games', [], (result) => {
+      const data = {
+        // new_notavlepc: [],
+        // top_grossing_game: [],
+      };
+      if (result && result.length) {
+        result.forEach(item => {
+          if (!data[item.type]) data[item.type] = [];
+          if (data[item.type].length < 9) {
+            data[item.type].push(item);
+          }
+        });
+        res.send({code: 0, message: '获取成功', data: data});
+      } else {
+        res.send({code: 1, message: '获取失败', data: {}});
+      }
+    })
+  }
+})
+app.get('/store_movies', (req, res) => {
+  const { type } = req.query;
+  if (type === 'home') {
+    db.query('SELECT * FROM store_movies', [], (result) => {
+      const orMap = {
+        new_movies: 9,
+        action_adventure: 3,
+        kids_family: 3,
+        drama: 3,
+        comedy: 3,
+        top_selling: 3,
+        top_selling_tv: 3,
+      }
+      const data = {};
+      if (result && result.length) {
+        result.forEach(item => {
+          if (orMap[item.type]) {
+            !data[item.type] ? data[item.type] = [item] : data[item.type].push(item);
+            orMap[item.type] = orMap[item.type] - 1;
+          }
+        });
+        res.send({code: 0, message: '获取成功', data: data});
+      } else {
+        res.send({code: 1, message: '获取失败', data: {}});
+      }
+    })
+  }
+})
 // 用于视频对话的websocket
 const clients = {}
 var wss = new WebSocket.Server({ port: 8081 });
