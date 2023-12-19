@@ -441,8 +441,8 @@ app.get('/store_movies', (req, res) => {
         kids_family: 3,
         drama: 3,
         comedy: 3,
-        top_selling: 3,
-        top_selling_tv: 3,
+        top_selling: 6,
+        top_selling_tv: 6,
       }
       const data = {};
       if (result && result.length) {
