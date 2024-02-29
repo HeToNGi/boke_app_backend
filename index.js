@@ -180,7 +180,7 @@ app.get('/stock_price', (req, res) => {
   });
 });
 
-let access_token = '24.3a752bad7b97f23cc087b70c182b2852.2592000.1705200589.282335-41731834';
+let access_token = '24.d3299a28bf7b7c79bd30dcf0ccbdd60b.2592000.1711816210.282335-41731833';
 // let access_token = '24.4cdd94cd61a959652b52538642ee3d1d.2592000.1700815691.282335-41731833';
 app.post('/wenxinworkshop', (req, res) => {
   const { messages } = req.body;
@@ -188,7 +188,7 @@ app.post('/wenxinworkshop', (req, res) => {
     "messages": messages
   }).then(response => {
     const { error_code } = response.data;
-    if (error_code && error_code === 111) {
+    if (error_code) {
       apiClient.post('/oauth/2.0/token?client_id=RAzDbN1aPg2vzpTEA1qZTyPB&client_secret=5vbU1fqGtXqiQbjNe81xavuQ8Tedh6fA&grant_type=client_credentials').then((r) => {
         access_token = r.data.access_token;
         console.log('认证过期', new Date())
